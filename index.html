@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Runway</title>
+<meta name="description" content="Planificateur de parcours de course à pied calculés sur les vrais chemins OpenStreetMap.">
+<meta name="theme-color" content="#F5F4EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1612" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Runway">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="map" aria-label="Carte"></div>
+
+<header class="topbar">
+  <div class="brand" aria-label="Runway">
+    <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true"><path d="M6 25c5-1 6-7 10-10s9-2 10-8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="6" cy="25" r="2.6" fill="currentColor"/><circle cx="26" cy="7" r="2.6" fill="currentColor"/></svg>
+    <span>Runway</span>
+  </div>
+  <div class="top-actions">
+    <button class="fab" id="btn-layers-fit" title="Voir tout le parcours" aria-label="Voir tout le parcours" hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button class="fab" id="btn-locate" title="Me localiser" aria-label="Me localiser">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="pick-banner" id="pick-banner" hidden>
+  <span id="pick-text">Touche la carte pour placer le départ</span>
+  <button class="btn-text" id="pick-cancel">Annuler</button>
+</div>
+
+<section class="sheet" id="sheet" data-size="mid">
+  <button class="sheet-handle" id="sheet-handle" aria-label="Agrandir ou réduire le panneau"><span></span></button>
+  <div class="sheet-body" id="sheet-body">
+
+    <!-- ACCUEIL -->
+    <div class="view" id="view-home">
+      <p class="eyebrow" id="home-date"></p>
+      <h1 class="display" id="home-hello">Bonjour</h1>
+      <p class="lead">Où veux-tu courir aujourd'hui&nbsp;?</p>
+      <div class="loc-status" id="loc-status"></div>
+      <button class="btn btn-primary btn-xl" id="btn-create">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        Créer un parcours
+      </button>
+      <div class="quick" id="quick-distances"></div>
+      <div class="home-block">
+        <div class="block-head"><h2>Mes favoris</h2><button class="btn-text" data-go="library">Tout voir</button></div>
+        <div id="home-favs"></div>
+      </div>
+      <div class="home-block">
+        <div class="block-head"><h2>Dernières courses</h2><button class="btn-text" data-go="library">Historique</button></div>
+        <div id="home-runs"></div>
+      </div>
+    </div>
+
+    <!-- CRÉER -->
+    <div class="view" id="view-create" hidden>
+      <div class="view-head"><button class="icon-btn" data-go="home" aria-label="Retour"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h1 class="h1">Nouveau parcours</h1></div>
+
+      <div class="nl-box">
+        <label for="nl-input" class="label">Décris ta course</label>
+        <div class="nl-row">
+          <input id="nl-input" type="text" placeholder="4 km sur du plat, tranquille, en boucle" autocomplete="off">
+          <button class="btn btn-soft" id="nl-apply">Remplir</button>
+        </div>
+        <p class="hint" id="nl-feedback"></p>
+      </div>
+
+      <fieldset class="field">
+        <legend class="label">Distance</legend>
+        <div class="dist-row">
+          <input type="range" id="dist-range" min="1" max="30" step="0.1" value="5" aria-label="Distance en kilomètres">
+          <div class="dist-input"><input type="number" id="dist-num" min="1" max="30" step="0.1" value="5" inputmode="decimal" aria-label="Distance saisie"><span>km</span></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Départ</legend>
+        <div class="seg" data-name="startMode">
+          <button data-v="gps">Ma position</button><button data-v="home">Domicile</button><button data-v="search">Adresse</button><button data-v="map">Sur la carte</button>
+        </div>
+        <div class="search" id="start-search" hidden>
+          <input type="search" id="start-q" placeholder="Rechercher une adresse" autocomplete="off">
+          <ul class="results" id="start-results"></ul>
+        </div>
+        <p class="picked" id="start-label">Aucun point de départ</p>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Arrivée</legend>
+        <div class="seg" data-name="mode">
+          <button data-v="loop">Boucle</button><button data-v="outback">Aller-retour</button><button data-v="ab">Point A → B</button>
+        </div>
+        <div id="end-block" hidden>
+          <div class="seg seg-small" data-name="endMode"><button data-v="search">Adresse</button><button data-v="map">Sur la carte</button></div>
+          <div class="search" id="end-search">
+            <input type="search" id="end-q" placeholder="Adresse d'arrivée" autocomplete="off">
+            <ul class="results" id="end-results"></ul>
+          </div>
+          <p class="picked" id="end-label">Aucun point d'arrivée</p>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Dénivelé</legend>
+        <div class="seg seg-wrap" data-name="elevation">
+          <button data-v="flat">Quasiment plat</button><button data-v="low">Faible</button><button data-v="moderate">Modéré</button><button data-v="any">Peu importe</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Environnement <span class="label-note">plusieurs choix</span></legend>
+        <div class="chips" data-name="env" data-multi="1">
+          <button data-v="park">Parcs et verdure</button><button data-v="city">Ville</button><button data-v="residential">Quartier résidentiel</button><button data-v="water">Bord de rivière ou lac</button><button data-v="greenway">Voies vertes</button><button data-v="natural">Chemins naturels</button><button data-v="any">Peu importe</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Tranquillité</legend>
+        <div class="seg seg-wrap" data-name="calm">
+          <button data-v="busy">Rassurant et fréquenté</button><button data-v="calm">Calme mais pas isolé</button><button data-v="veryquiet">Très tranquille</button><button data-v="any">Peu importe</button>
+        </div>
+        <p class="hint">Runway compare des données OpenStreetMap (axes, éclairage, sentiers). Aucun parcours n'est garanti sans danger.</p>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Surface</legend>
+        <div class="seg seg-wrap" data-name="surface">
+          <button data-v="asphalt">Goudron</button><button data-v="stabilized">Stabilisé</button><button data-v="natural">Sentier</button><button data-v="mixed">Mixte</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Moment</legend>
+        <div class="seg seg-wrap" data-name="moment">
+          <button data-v="morning">Matin</button><button data-v="day">Journée</button><button data-v="evening">Soirée</button><button data-v="night">Nuit</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend class="label">Options</legend>
+        <div class="checks" id="opts">
+          <label><input type="checkbox" id="opt-avoidStairs"><span>Éviter les escaliers</span></label>
+          <label><input type="checkbox" id="opt-avoidSteepDown"><span>Éviter les fortes descentes</span></label>
+          <label><input type="checkbox" id="opt-avoidBusyRoads"><span>Éviter les routes très fréquentées</span></label>
+          <label><input type="checkbox" id="opt-avoidIsolated"><span>Éviter les chemins isolés</span></label>
+          <label><input type="checkbox" id="opt-minLights"><span>Minimiser les feux rouges</span></label>
+          <label><input type="checkbox" id="opt-minCrossings"><span>Minimiser les traversées</span></label>
+          <label><input type="checkbox" id="opt-preferPaths"><span>Privilégier les chemins piétons</span></label>
+          <label><input type="checkbox" id="opt-avoidRough"><span>Éviter les terrains irréguliers</span></label>
+          <label><input type="checkbox" id="opt-shortenable"><span>Parcours facilement raccourcissable</span></label>
+        </div>
+      </fieldset>
+      <div class="sticky-cta">
+        <p class="error" id="create-error" hidden></p>
+        <button class="btn btn-primary btn-xl" id="btn-generate">Générer mon parcours</button>
+      </div>
+    </div>
+
+    <!-- RÉSULTATS -->
+    <div class="view" id="view-results" hidden>
+      <div class="view-head"><button class="icon-btn" data-go="create" aria-label="Modifier les critères"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h1 class="h1">Propositions</h1></div>
+      <div id="progress" class="progress" hidden>
+        <div class="bar"><span id="progress-bar"></span></div>
+        <p id="progress-text">Calcul…</p>
+      </div>
+      <div id="results-list"></div>
+      <div id="results-notes"></div>
+    </div>
+
+    <!-- DÉTAIL -->
+    <div class="view" id="view-detail" hidden>
+      <div class="view-head"><button class="icon-btn" id="detail-back" aria-label="Retour"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h1 class="h1" id="detail-title">Parcours</h1></div>
+      <div class="statgrid" id="detail-stats"></div>
+      <button class="btn btn-accent btn-xl" id="btn-start-run">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 4l13 8-13 8z" fill="currentColor"/></svg>
+        Démarrer ma course
+      </button>
+      <div class="row-actions">
+        <button class="btn btn-soft" id="btn-save">Enregistrer</button>
+        <button class="btn btn-soft" id="btn-gpx">Exporter GPX</button>
+      </div>
+      <div class="save-box" id="save-box" hidden>
+        <input type="text" id="save-name" maxlength="60" placeholder="Nom du parcours">
+        <button class="btn btn-primary" id="save-confirm">OK</button>
+      </div>
+      <p class="toast-inline" id="detail-msg" hidden></p>
+      <h2 class="h2">Profil altimétrique</h2>
+      <div id="detail-profile" class="profile"></div>
+      <div id="detail-attention"></div>
+      <h2 class="h2">Itinéraire pas à pas</h2>
+      <ol class="steps" id="detail-steps"></ol>
+    </div>
+
+    <!-- BIBLIOTHÈQUE -->
+    <div class="view" id="view-library" hidden>
+      <h1 class="h1">Mes parcours</h1>
+      <div class="seg" data-name="libTab"><button data-v="favs">Favoris</button><button data-v="runs">Historique</button></div>
+      <div id="lib-favs"></div>
+      <div id="lib-runs" hidden></div>
+    </div>
+
+    <!-- PROFIL -->
+    <div class="view" id="view-profile" hidden>
+      <h1 class="h1">Mon profil</h1>
+      <div class="form">
+        <label class="f"><span class="label">Prénom</span><input type="text" id="p-name" maxlength="40" autocomplete="given-name"></label>
+        <label class="f"><span class="label">Niveau</span>
+          <select id="p-level"><option value="debutant">Débutante</option><option value="intermediaire">Intermédiaire</option><option value="confirme">Confirmée</option></select>
+        </label>
+        <div class="f"><span class="label">Allure habituelle</span>
+          <div class="pace-row"><input type="number" id="p-pace-min" min="3" max="15" inputmode="numeric" aria-label="Minutes"><span>'</span><input type="number" id="p-pace-sec" min="0" max="59" inputmode="numeric" aria-label="Secondes"><span>" / km</span></div>
+        </div>
+        <label class="f"><span class="label">Distances préférées en km (ex. 4 ; 6 ; 10)</span><input type="text" id="p-dists" inputmode="decimal"></label>
+        <div class="f"><span class="label">Domicile / départ favori</span>
+          <div class="search">
+            <input type="search" id="p-home-q" placeholder="Rechercher une adresse" autocomplete="off">
+            <ul class="results" id="p-home-results"></ul>
+          </div>
+          <p class="picked" id="p-home-label">Non renseigné</p>
+        </div>
+        <label class="f"><span class="label">Terrain préféré</span>
+          <select id="p-surface"><option value="asphalt">Goudron</option><option value="stabilized">Chemin stabilisé</option><option value="natural">Sentier naturel</option><option value="mixed">Mixte</option></select>
+        </label>
+        <label class="f"><span class="label">Tolérance au dénivelé</span>
+          <select id="p-elev"><option value="flat">Quasiment plat</option><option value="low">Faible</option><option value="moderate">Modérée</option><option value="any">Peu importe</option></select>
+        </label>
+        <label class="f"><span class="label">Sécurité et tranquillité</span>
+          <select id="p-calm"><option value="busy">Rassurant et fréquenté</option><option value="calm">Calme mais pas isolé</option><option value="veryquiet">Très tranquille</option><option value="any">Peu importe</option></select>
+        </label>
+        <label class="switch"><input type="checkbox" id="p-joints"><span><b>Ménager mes genoux</b><br><small>Active par défaut : éviter escaliers et fortes descentes, terrains réguliers, peu de dénivelé. Indicatif, ne remplace pas un avis médical.</small></span></label>
+      </div>
+      <h2 class="h2">Réglages</h2>
+      <div class="form">
+        <div class="f"><span class="label">Thème</span>
+          <div class="seg" data-name="theme"><button data-v="auto">Auto</button><button data-v="light">Clair</button><button data-v="dark">Sombre</button></div>
+        </div>
+        <label class="switch"><input type="checkbox" id="s-voice"><span><b>Guidage vocal</b><br><small>Annonce les changements de direction pendant la course.</small></span></label>
+        <div class="f"><span class="label">Moteur de calcul</span>
+          <div class="seg" data-name="engine"><button data-v="osrm">OSRM (sans clé)</button><button data-v="ors">openrouteservice</button></div>
+          <input type="url" id="s-ors" placeholder="URL de ton proxy openrouteservice" hidden>
+          <p class="hint">openrouteservice évite vraiment les escaliers et sait favoriser la verdure et le calme pendant le calcul. Il demande une clé gardée dans un proxy (voir README).</p>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-xl" id="btn-save-profile">Enregistrer mon profil</button>
+      <p class="toast-inline" id="profile-msg" hidden></p>
+      <p class="credits">Données © contributeurs OpenStreetMap (ODbL). Itinéraires : OSRM / FOSSGIS. Altitude : Open-Meteo (Copernicus DEM). Adresses : Photon / Komoot. Une erreur sur la carte&nbsp;? <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Signale-la à OpenStreetMap</a>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COURSE EN DIRECT -->
+<section class="run" id="run" hidden>
+  <div class="run-next" id="run-next">
+    <div class="turn-ico" id="run-turn"></div>
+    <div><p class="run-next-dist" id="run-next-dist">–</p><p class="run-next-text" id="run-next-text">Prépare-toi</p></div>
+  </div>
+  <div class="run-alert" id="run-alert" hidden></div>
+  <div class="run-panel">
+    <div class="run-chrono" id="run-chrono">0:00</div>
+    <div class="run-grid">
+      <div><span class="k">Parcouru</span><span class="v" id="run-dist">0,00</span><span class="u">km</span></div>
+      <div><span class="k">Restant</span><span class="v" id="run-rem">–</span><span class="u">km</span></div>
+      <div><span class="k">Allure moy.</span><span class="v" id="run-pace">–</span><span class="u">/km</span></div>
+      <div><span class="k">Vitesse</span><span class="v" id="run-speed">–</span><span class="u">km/h</span></div>
+    </div>
+    <div class="run-bar"><span id="run-bar"></span></div>
+    <p class="run-gps" id="run-gps">GPS : recherche…</p>
+    <div class="run-actions" id="run-actions">
+      <button class="btn btn-soft btn-xl" id="run-pause">Pause</button>
+      <button class="btn btn-danger btn-xl" id="run-stop">Terminer</button>
+    </div>
+    <div class="run-confirm" id="run-confirm" hidden>
+      <p>Terminer et enregistrer la course&nbsp;?</p>
+      <div class="row-actions"><button class="btn btn-soft" id="run-confirm-no">Continuer</button><button class="btn btn-danger" id="run-confirm-yes">Terminer</button></div>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="prerun" hidden>
+  <div class="modal-card">
+    <h2 class="h2">Avant de partir</h2>
+    <ul class="bullets">
+      <li>Sur iPhone, une web app perd le GPS quand l'écran se verrouille ou que tu changes d'appli. Runway essaie de garder l'écran allumé&nbsp;; si ça échoue, règle le verrouillage auto sur «&nbsp;Jamais&nbsp;» pendant la course.</li>
+      <li>Précision GPS d'un téléphone en ville&nbsp;: souvent 5 à 20&nbsp;m, parfois plus entre les immeubles. La précision réelle s'affiche pendant la course.</li>
+      <li>Reste attentive à la circulation&nbsp;: les données OSM peuvent être incomplètes ou dépassées.</li>
+    </ul>
+    <div class="row-actions"><button class="btn btn-soft" id="prerun-cancel">Annuler</button><button class="btn btn-accent" id="prerun-go">C'est parti</button></div>
+  </div>
+</div>
+
+<div class="modal" id="confirm-modal" hidden>
+  <div class="modal-card">
+    <p id="confirm-text"></p>
+    <div class="row-actions"><button class="btn btn-soft" id="confirm-no">Annuler</button><button class="btn btn-danger" id="confirm-yes">Supprimer</button></div>
+  </div>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-go="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span>Accueil</span></button>
+  <button data-go="create"><svg viewBox="0 0 24 24"><path d="M5 19c4-1 4-6 7-8s7-1 7-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="5" cy="19" r="2" fill="currentColor"/><circle cx="19" cy="5" r="2" fill="currentColor"/></svg><span>Créer</span></button>
+  <button data-go="library"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span>Parcours</span></button>
+  <button data-go="profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span>Profil</span></button>
+</nav>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
