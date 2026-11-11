@@ -2,11 +2,9 @@
 /* global L */
 import { cumulative, bearing, resample } from "./geo.js";
 
-const TILES = {
-  light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-};
-const ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// Tuiles OpenStreetMap officielles (sans clé, usage léger, attribution obligatoire).
+const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a>';
 
 export class MapView {
   constructor(el) {
@@ -26,8 +24,9 @@ export class MapView {
   }
 
   setTheme(mode) {
-    if (this.tiles) this.map.removeLayer(this.tiles);
-    this.tiles = L.tileLayer(TILES[mode], { maxZoom: 20, subdomains: "abcd", attribution: ATTRIB, detectRetina: true }).addTo(this.map);
+    if (!this.tiles) this.tiles = L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIB }).addTo(this.map);
+    // Mode sombre : la carte claire est assombrie par un filtre CSS.
+    this.map.getContainer().classList.toggle("map-dark", mode === "dark");
   }
 
   invalidate() { setTimeout(() => this.map.invalidateSize(), 60); }

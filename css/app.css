@@ -334,3 +334,9 @@ body.running .sheet, body.running .tabbar, body.running .topbar .brand { display
   * { animation: none !important; transition: none !important; }
 }
 .credits a { color: var(--forest); font-weight: 700; }
+
+/* Carte en mode sombre : inversion douce des tuiles OSM */
+.map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.9) saturate(.55); }
+@media (min-width: 900px) {
+  .sheet { height: calc(100% - 96px) !important; }
+}
