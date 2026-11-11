@@ -1,10 +1,10 @@
 // Runway — interface et orchestration.
-import { MapView, escapeHtml } from "./mapview.js";
-import { planRuns, TOLERANCE } from "./engine.js";
-import { searchAddress, reverseGeocode } from "./api.js";
-import { store } from "./store.js";
-import { LiveRun } from "./run.js";
-import { fmtKm, fmtDuration, fmtPace, decodePolyline, makeProjector } from "./geo.js";
+import { MapView, escapeHtml } from "./mapview.js?v=3";
+import { planRuns, TOLERANCE } from "./engine.js?v=3";
+import { searchAddress, reverseGeocode } from "./api.js?v=3";
+import { store } from "./store.js?v=3";
+import { LiveRun } from "./run.js?v=3";
+import { fmtKm, fmtDuration, fmtPace, decodePolyline, makeProjector } from "./geo.js?v=3";
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];

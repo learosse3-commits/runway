@@ -1,9 +1,9 @@
 // Service worker Runway : met en cache l'interface pour un lancement rapide.
 // Les calculs d'itinéraire, l'altitude et les fonds de carte passent toujours par le réseau.
-const CACHE = "runway-v2";
+const CACHE = "runway-v3";
 const SHELL = [
-  "./", "index.html", "css/app.css", "manifest.webmanifest",
-  "js/app.js", "js/api.js", "js/engine.js", "js/geo.js", "js/mapview.js", "js/run.js", "js/store.js",
+  "./", "index.html", "css/app.css?v=3", "manifest.webmanifest",
+  "js/app.js?v=3", "js/api.js?v=3", "js/engine.js?v=3", "js/geo.js?v=3", "js/mapview.js?v=3", "js/run.js?v=3", "js/store.js?v=3",
   "icons/icon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png",
   "vendor/leaflet/leaflet.css", "vendor/leaflet/leaflet.js",
 ];

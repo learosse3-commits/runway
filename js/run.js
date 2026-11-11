@@ -1,5 +1,5 @@
 // Mode course en direct : GPS, chrono, progression sur le tracé, alertes, guidage vocal.
-import { haversine, cumulative, makeProjector, nearestOnLine, encodePolyline } from "./geo.js";
+import { haversine, cumulative, makeProjector, nearestOnLine, encodePolyline } from "./geo.js?v=3";
 
 export class LiveRun {
   constructor(route, { onUpdate, onAlert, voice = true }) {

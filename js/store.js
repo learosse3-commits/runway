@@ -1,5 +1,5 @@
 // Sauvegarde locale (sur ce téléphone uniquement). Rien n'est envoyé à un serveur.
-import { encodePolyline, decodePolyline } from "./geo.js";
+import { encodePolyline, decodePolyline } from "./geo.js?v=3";
 
 const K = { profile: "runway.profile", favs: "runway.favorites", runs: "runway.runs", settings: "runway.settings" };
 

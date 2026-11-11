@@ -1,6 +1,6 @@
 // Carte Leaflet : fond OSM (rendu CARTO), tracé, flèches de sens, bornes kilométriques, virages.
 /* global L */
-import { cumulative, bearing, resample } from "./geo.js";
+import { cumulative, bearing, resample } from "./geo.js?v=3";
 
 // Tuiles OpenStreetMap officielles (sans clé, usage léger, attribution obligatoire).
 const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";

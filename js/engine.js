@@ -1,9 +1,9 @@
 // Moteur Runway : génération d'itinéraires, analyse (dénivelé + attributs OSM) et score transparent.
-import { routeOSRM, routeORS, elevations, overpassAround, ApiError } from "./api.js";
+import { routeOSRM, routeORS, elevations, overpassAround, ApiError } from "./api.js?v=3";
 import {
   haversine, destination, bearing, resample, cumulative, makeProjector, SegmentGrid,
   pointInRing, overlapShare, selfRepeatShare, nearestOnLine,
-} from "./geo.js";
+} from "./geo.js?v=3";
 
 export const TOLERANCE = 0.03;
 
